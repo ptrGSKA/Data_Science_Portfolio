@@ -8,8 +8,8 @@ Data was accessed on Kaggle and used under the specific Licence agreements.
 ## Instruction to use R and Python analysis
 
 R projects can be viewed locally:
-    1. Dowload the latest RToold package from CRAN website (https://www.r-project.org/)
-    2. Install RStudio from https://posit.co/downloads/
+1. Dowload the latest RToold package from CRAN website (https://www.r-project.org/)
+2. Install RStudio from https://posit.co/downloads/
 
 Alternatively it can be accessed on RPubs by selecting the links below.
 
@@ -19,29 +19,26 @@ Python projects can be accessed here on Github.
 
 ### R
 
-## Exploratory data analysis and data visualization
+-  __Exploratory data analysis and data visualization__
 
-Black Friday Sales Analysis: Univariate analysis of a company sales during Black Friday
+      - [Black Friday Sales Analysis](https://rpubs.com/ptrGSKA/): Univariate analysis of a company sales during Black Friday
 
-Memory Test Drug Trial Analysis: #############
+      - [Memory Test Drug Trial Analysis](https://rpubs.com/ptrGSKA/memory_drug_test): ############
 
-    https://rpubs.com/ptrGSKA/memory_drug_test
+      - [Financial Analysis of Global Markets](https://rpubs.com/ptrGSKA/1051903): ###########
 
-Financial Analysis of Global Markets: ###########
-    https://rpubs.com/ptrGSKA/1051903
+- __Machine Learning__
 
-## Machine Learning
-
- Home Loan Approval Prediction: Univariate and Multivariate analysis of loan applicants and application of Binary Logistic
+     - [Home Loan Approval Prediction](https://rpubs.com/ptrGSKA/): Univariate and Multivariate analysis of loan applicants and application of Binary Logistic
                                 Regression on train data to predict the outcome of a loan application.
-## Shiny web application
+- __Shiny web application__
 
-    https://ptrgska.shinyapps.io/financial_analysis_shiny/
+    - [Financial analysis of Global Stock Markets](https://ptrgska.shinyapps.io/financial_analysis_shiny/): ###########
 
 
 ### Python
 
-## Exploratory data analysis and data visualization
+- __Exploratory data analysis and data visualization__
 
-Yulu Business Hypothesis testing
+    - [Yulu Business Hypothesis testing]( xxxxxx ): 
 
