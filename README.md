@@ -24,6 +24,7 @@ Python projects can be accessed here on Github.
 Black Friday Sales Analysis: Univariate analysis of a company sales during Black Friday
 
 Memory Test Drug Trial Analysis: #############
+
     https://rpubs.com/ptrGSKA/memory_drug_test
 
 Financial Analysis of Global Markets: ###########
