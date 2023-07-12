@@ -1,0 +1,294 @@
+---
+title: "Memory Test Drug Trial Analysis"
+author: "Peter G"
+date: "2023-04-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn = 0) 
+```
+
+## Background
+
+An experiment on the effects of anti-anxiety medicine on memory recall when being primed with happy or sad memories. The participants were done on novel Islanders whom mimic real-life humans in response to external factors.
+
+Drugs of interest (known-as) [Dosage 1, 2, 3]:
+
+A - Alprazolam (Xanax, Long-term) [1mg/3mg/5mg]
+
+T - Triazolam (Halcion, Short-term) [0.25mg/0.5mg/0.75mg]
+
+S- Sugar Tablet (Placebo) [1 tab/2tabs/3tabs]
+
+- Dosages follow a 1:1 ratio to ensure validity
+- Happy or Sad memories were primed 10 minutes prior to testing
+- Participants tested every day for 1 week to mimic addiction
+
+Participants - all genders above 25+ years old to ensure a fully developed pre-frontal cortex, a region responsible for higher level cognition and memory recall.
+
+### Libraries 
+```{r libraries}
+pacman::p_load(tidyverse, GGally, ggExtra, reshape2, AICcmodavg, RColorBrewer)
+```
+
+```{r data_import}
+memtest <- read.csv('Islander_data.csv', header = TRUE)
+```
+
+### Data characteristics
+
+```{r data_characteristics}
+summary(memtest)
+str(memtest)
+sum(is.na(memtest))
+```
+There is no missing value from our data set but we need to convert variables into categorical format for further analysis.
+
+```{r convert_to_factor}
+memtest$Happy_Sad_group <- as.factor(memtest$Happy_Sad_group)
+memtest$Drug <- as.factor(memtest$Drug)
+```
+
+## Exploratory Data Analysis
+
+### Descriptive statistics
+
+```{r unique1}
+table(memtest$Dosage, memtest$Drug)
+```
+
+The table shows the number of participants for each drug and dosage. The participants in the clinical trial were grouped into equal groups.
+
+```{r unique2}
+table(memtest$Dosage, memtest$Drug, memtest$Happy_Sad_group)
+```
+
+The participants in each group were allocated evenly among the the happy and sad memory groups.
+
+### Data Visualization
+
+```{r desc_stat}
+memtest %>% ggplot(aes(x = age, color = 4)) + 
+            geom_histogram(bins = 45, fill = '#2196f3', position = "dodge", show.legend = FALSE) +
+            labs(x = 'Age', y = 'Number of participants') + 
+            ggtitle('Distribution of participants by age') +
+            theme(plot.title = element_text(hjust = 0.5))
+
+ggpairs(memtest[,c('age','Dosage','Mem_Score_Before','Mem_Score_After','Diff')],
+        title = 'Correlation between the variables',
+        aes(color = memtest$Happy_Sad_group, alpha = 0.25),
+        columnLabels = c('age','Dosage','Mem_Score_Before','Mem_Score_After','Diff'),
+        lower = list(continuous = "smooth")) +
+        theme(plot.title = element_text(hjust = 0.5))
+```
+
+The age shows a non normal distribution among the participants. There is positive correlation between the memory score before and after the test, also we can observe a slight positive correlation between the memory score after and the difference.
+
+```{r score_by_block}
+hist <- ggplot(memtest, aes(x = Mem_Score_Before, y = Mem_Score_After, color = Happy_Sad_group)) +
+        geom_point() +
+        scale_y_continuous(breaks = seq(25, 125, by = 10)) +
+        scale_x_continuous(breaks = seq(25, 125, by = 10)) +
+        labs(x = 'Memory score before', y = 'Memory score after') +
+        ggtitle('Memory score by block comarison')
+        ggMarginal(hist, type = 'histogram', xparams = list(fill = 4), yparams = list(fill = 3))
+
+happy_grp <- select(memtest, first_name, last_name, Mem_Score_Before, Mem_Score_After, Happy_Sad_group) %>% filter(Happy_Sad_group == 'H') %>% melt(id.vars = c('first_name', 'last_name', 'Happy_Sad_group'))
+sad_grp <- select(memtest, first_name, last_name, Mem_Score_Before, Mem_Score_After, Happy_Sad_group) %>% filter(Happy_Sad_group == 'S') %>% melt(id.vars = c('first_name', 'last_name', 'Happy_Sad_group'))
+        ggplot(happy_grp, aes(x = variable, y = value, color = variable)) +
+        geom_point(cex = 1.5, pch = 1.0, position = position_jitter(w = 0.1, h = 0)) +
+        geom_boxplot(alpha = 0.5) +
+        geom_point(data = sad_grp ,cex = 1.5, pch = 1.0, position = position_jitter(w = 0.1, h = 0)) +
+        geom_boxplot(data = sad_grp, alpha = 0.5) +
+        facet_wrap(~Happy_Sad_group) +
+        labs(x = 'Memory score before vs after', y = 'Score') +
+        ggtitle('Memory score by block before and after the test comarison') +
+        theme(plot.title = element_text(hjust = 0.5))
+```
+
+The correlation between the scores before and after the test among the happy and sad blocks. The second plot indicates that the means of the groups are negligible between the two blocks, suggesting that the happy and sad memories that were primed 10 minutes prior to testing has no significant contribution.
+
+```{r score_by_drug_dosage}
+memtest %>% ggplot(aes(x = Mem_Score_Before, y = Mem_Score_After, color = Dosage)) +
+            geom_point() + 
+            facet_wrap(~Drug) + 
+            labs(x = 'Memory score before', y = 'Memory score after') +
+            ggtitle('Memory score by drugs and dosage comparison') +
+            theme(plot.title = element_text(hjust = 0.5))
+```
+
+The correlation between the two different drugs and the control group among the two blocks.
+
+```{r memscore_before_by_drug_dosage}
+memtest %>% ggplot(aes(x = Dosage, y = Mem_Score_Before, group = Dosage, color = Dosage)) +
+            geom_point(cex = 1.5, pch = 1.0, position = position_jitter(w = 0.1, h = 0)) +
+            geom_boxplot(alpha = 0.5) +
+            facet_wrap(~Drug) +
+            labs(x = 'Dosage', y = 'Memory score before') +
+            ggtitle('Memory score by drug groups and dosage before the test') +
+            theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r memscore_after_by_drug_dosage}
+memtest %>% ggplot(aes(x = Dosage, y = Mem_Score_After, group = Dosage, color = Dosage)) +
+            geom_point(cex = 1.5, pch = 1, position = position_jitter(w = 0.1, h = 0)) +
+            geom_boxplot(alpha = 0.5) +
+            facet_wrap(~Drug) +
+            labs(x = 'Dosage', y = 'Memory score after') +
+            ggtitle('Memory score by drug groups and dosage after the test') +
+            theme(plot.title = element_text(hjust = 0.5))
+```
+
+The Alprazolam has the biggest effect on memory score with the increase of dosage there is a significant increase on scores. The sugar and Triazolam didn't show any significant increase in scores only a slight improvement with the Triazolam.
+
+```{r higest_mem_before_vs_after}
+A_ordered <- memtest[order(memtest$Mem_Score_Before, decreasing = TRUE),] %>% filter(Drug == 'A') %>% select(first_name, last_name, Mem_Score_Before, Mem_Score_After) %>%
+  head(n = 10)
+S_ordered <- memtest[order(memtest$Mem_Score_Before, decreasing = TRUE),] %>% filter(Drug == 'S') %>% select(first_name, last_name, Mem_Score_Before, Mem_Score_After) %>% 
+  head(n = 10)
+T_ordered <- memtest[order(memtest$Mem_Score_Before, decreasing = TRUE),] %>% filter(Drug == 'T') %>% select(first_name, last_name, Mem_Score_Before, Mem_Score_After) %>% 
+  head(n = 10)
+
+melt(A_ordered, id.vars = c('first_name', 'last_name')) %>%
+  ggplot(aes(x = value, y = first_name)) + 
+  geom_line() + 
+  geom_point(aes(color = variable), size = 3) + 
+  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5)) +
+  ggtitle('Top 10 performer before vs after - Drug A') +
+  labs(x = 'Performance score', y = 'Top 10 performer')
+
+melt(S_ordered, id.vars = c('first_name', 'last_name')) %>%
+  ggplot(aes(x = value, y = first_name)) + 
+  geom_line() + 
+  geom_point(aes(color = variable), size = 3) + 
+  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5)) +
+  ggtitle('Top 10 performer before vs after - Drug S') +
+  labs(x = 'Performance score', y = 'Top 10 performer')
+
+melt(T_ordered, id.vars = c('first_name', 'last_name')) %>%
+  ggplot(aes(x = value, y = first_name)) + 
+  geom_line() + 
+  geom_point(aes(color = variable), size = 3) + 
+  theme(legend.position = 'bottom', plot.title = element_text(hjust = 0.5)) +
+  ggtitle('Top 10 performer before vs after - Drug T') +
+  labs(x = 'Performance score', y = 'Top 10 performer')
+```
+
+The orange dots represents the score before the test while the score measure after the test is represented with the blue dots. \n
+
+The top 10 performers score before they received their dosage compared with the score after the dosage shown for each Drug. \n
+
+## Statistical analysis
+
+Performing an ANNOVA test to estimate how the quantitative dependent variable changes according to the independent variables. Our null hypothesis ($H_0$) of the ANOVA is, no difference in means and the alternative hypothesis ($H_a$) is that the means are differ from each other. \n
+We convert the dosage into a factorial variable before performing the test.
+
+```{r convert_dosage}
+memtest$Dosage <- as.factor(memtest$Dosage)
+```
+
+```{r ANOVA1}
+anova_two_way <- aov(formula = Diff~Drug+Dosage, data = memtest)
+summary(anova_two_way)
+```
+```{r ANOVA2}
+anova_interaction <- aov(formula = Diff~Drug*Dosage, data = memtest)
+summary(anova_interaction)
+```
+
+```{r ANOVA3}
+anova_inter_confounding <- aov(formula = Diff~Drug*Dosage+Happy_Sad_group, data = memtest)
+summary(anova_inter_confounding)
+```
+
+```{r ANOVA4}
+anova_three_inter <- aov(formula = Diff~Drug*Dosage*Happy_Sad_group, data = memtest)
+summary(anova_three_inter)
+```
+
+From the above summary we can decide whether any of the group means differ from the overall mean. We conducted four different ANOVA test, first a two-way ANOVA, secondly we included the interaction effect, third time the Happy and Sad grouping was included and lastly the interaction between the three independent variables were tested. \n
+
+From the summary we can conclude that the Happy_Sad_group variable and it's interaction with the other variables is not significant. It has a low sum of squares and a high p-value which means that it's not effecting the variation in the dependent variable. The only significant variables are the Drug, Dosage and the interaction between them. \n
+
+Finding the best fit model that explains the variation in the model, we use the Akaike Information Criterion that calculates the information value on each model. We choose the model with the lowest value as it explains more variation in the data.
+
+```{r AIC}
+model.set <- list(anova_two_way, anova_interaction, anova_inter_confounding, anova_three_inter)
+model.names <- c('anova_two_way', 'anova_interaction', 'anova_inter_confounding', 'anova_three_inter')
+
+aictab(model.set, modnames = model.names)
+```
+The ANOVA model with the interaction between the independent variables Drug and Dosage has the lowest AIC score and AIC weight meaning that it explains 74% of the total variation in the dependent variable.
+
+### Checking for homoscedascity
+
+We plot the model diagnostic
+
+```{r model_diagnostic}
+par(mfrow = c(2,2))
+plot(anova_interaction)
+par(mfrow = c(1,1))
+```
+The residuals plot shows the unexplained variance in the data. The Residuals vs Fitted looks good, it's centered around zero. The Q-Q plot shows the regression between theoretical and the actual residuals of the model. It shows some issues at both tails but seems sufficient. The Scale-Location is centered around at 1 meaning no large outliers. \n
+
+From the ANOVA test we concluded that there are differences between the group means but we don't know which groups are statistically different from one other. We perform the Tukey's HSD post-hoc test to do a pairwise comparison between each group and determine which groups are statistically significant.
+
+```{r TukeyHSD}
+TukeyHSD(anova_interaction, ordered = TRUE, conf.level = 0.95)
+```
+
+The Tukey's HSD test shows that the interaction of Alprazolam and Triazolam, Alprazolam and Sugar are significant however the Triazolam and Sugar comparison found to be not significant with a p-value of 0.95. The significant groups are:
+
+- A:3-S:3
+- A:3-T:3
+- A:3-T:1
+- A:3-S:2
+- A:3-A:1
+- A:3-T:2
+- A:3-S:1
+- A:3-A:2
+
+### Residual diagnostic
+
+```{r TukeyHSD_plot}
+plot(TukeyHSD(anova_interaction, conf.level = 0.95),las = 2.5)
+```
+
+The significant group-wise differences are where the confidence interval doesn't include zero, meaning that the p-value is <0.05.
+
+```{r drug_by_dosage_mean_se}
+ggplot(memtest, aes(x = Dosage, y = Diff, color = Drug)) +
+  geom_point(cex = 1.5, pch = 1.0, position = position_jitter(w = 0.1, h = 0)) +
+  geom_boxplot(alpha = 0.2) +
+  stat_summary(fun.data = 'mean_se', geom = 'errorbar', width = 0.2, color = 'red') +
+  stat_summary(fun.data = 'mean_se', geom = 'pointrange', color = 'red') +
+  facet_wrap(~Drug) + 
+  labs(x = 'Dosage from 1-3', y = 'Difference in memory score') +
+  ggtitle('Mean difference of Drugs by dosage with standard error') +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The mean difference between the Drugs and Dosages shown above with standard errors for each group.
+
+```{r mean_calc_by_drug_and_dosage}
+m <- matrix(data = 0, nrow = 3, ncol = 3, dimnames = list(c('1','2','3'),c('A','T','S')))
+for (i in 1:3){
+  for (j in c('A', 'T', 'S')){
+    x <- memtest %>% group_by(Dosage) %>% filter(Dosage == i, Drug == j) %>% summarise(mean = mean(Diff))
+    m[i,j] <- x[[2]]
+  }
+}
+m <- as.data.frame(m)
+ggplot(m, aes(x = seq(1,3, by = 1))) + 
+  geom_line(aes(y = A), color = 1, linewidth = 0.5) + 
+  geom_line(aes(y = T), color = 2, linewidth = 0.5) +
+  geom_line(aes(y = S), color = 3, linewidth = 0.5) +
+  ggtitle('Interaction plot of A,T,S by dosage') +
+  labs(x = "Dosage", y = "Mean Difference") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+m
+```
+The interaction plot between the two drugs and the placebo shown above. The Alprazolam has the largest range of variance but it didn't interact with the Triazolam while the control group (Sugar) has interactions with both group.
