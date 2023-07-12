@@ -21,12 +21,12 @@ Python projects can be accessed here on Github.
 
 ## Exploratory data analysis and data visualization
 
-    Black Friday Sales Analysis: Univariate analysis of a company sales during Black Friday
+Black Friday Sales Analysis: Univariate analysis of a company sales during Black Friday
 
-    Memory Test Drug Trial Analysis: #############
+Memory Test Drug Trial Analysis: #############
     https://rpubs.com/ptrGSKA/memory_drug_test
 
-    Financial Analysis of Global Markets: ###########
+Financial Analysis of Global Markets: ###########
     https://rpubs.com/ptrGSKA/1051903
 
 ## Machine Learning
@@ -42,5 +42,5 @@ Python projects can be accessed here on Github.
 
 ## Exploratory data analysis and data visualization
 
-    Yulu Business Hypothesis testing
+Yulu Business Hypothesis testing
 
