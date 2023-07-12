@@ -32,8 +32,8 @@ Financial Analysis of Global Markets: ###########
 
 ## Machine Learning
 
-    Home Loan Approval Prediction: Univariate and Multivariate analysis of loan applicants and application of Binary Logistic
-                                   Regression on train data to predict the outcome of a loan application.
+ Home Loan Approval Prediction: Univariate and Multivariate analysis of loan applicants and application of Binary Logistic
+                                Regression on train data to predict the outcome of a loan application.
 ## Shiny web application
 
     https://ptrgska.shinyapps.io/financial_analysis_shiny/
