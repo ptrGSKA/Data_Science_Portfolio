@@ -39,7 +39,7 @@ Python projects can be accessed here on Github.
 
 - __Exploratory data analysis and data visualization__
 
-    - [Agro-food_CO2_emission]((https://github.com/ptrGSKA/Agro-food_CO2_emission)):
+    - [Agro-food_CO2_emission](https://github.com/ptrGSKA/Agro-food_CO2_emission):
 
     - [Yulu Business Hypothesis testing](https://github.com/ptrGSKA/Business_case-Yulu-Hypothesis_testing):
 
