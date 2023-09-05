@@ -1,0 +1,551 @@
+---
+title: "Home_Loan_Approval"
+author: "Peter G"
+date: "2023-06-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+## Background
+
+**About Company**
+
+Dream Housing Finance company deals in all home loans. They have a presence across all urban, semi-urban and rural areas. The customer first applies for a home loan after that company validates the customer's eligibility for a loan.
+
+The company wants to automate the loan eligibility process (real-time) based on customer detail provided while filling out the online application form. These details are Gender, Marital Status, Education, Number of Dependents, Income, Loan Amount, Credit History and others. To automate this process, they have given a problem identifying the customer segments eligible for loan amounts to target these customers specifically.
+
+This dataset is from Analytics Vidhya's Competition.
+
+### Data description
+
+- Loan Id - Id
+- Gender - Male/Female
+- Married - Marital status
+- Dependents - The number of dependents of a customer (0,1,2,3 or more)
+- Education - Has graduated or not
+- Self_Employed - Whether the customer is self-employed
+- ApplicantIncome - Applicant's monthly income
+- CoapplicantIncome - Second applicant's income
+- LoanAmount - Amount of loan applied for
+- Loan_Amount_Term - Borrowing time interval
+- Credit_History - Credit history is available
+- Property_Area - Location of the property (Urban, Semiurban, Rural)
+- Loan_Status - Accepted for loan or not
+
+```{r libraries}
+# Import packages
+pacman::p_load(tidyverse, gridExtra, circlize, AICcmodavg, RColorBrewer, dplyr, EnvStats, GGally)
+```
+
+```{r data_import}
+loan.train <- read.csv('loan_sanction_train.csv', header = TRUE)
+loan.test <- read.csv('loan_sanction_test.csv', header = TRUE)
+```
+
+### Data characteristics
+
+```{r data_characteristics}
+summary(loan.train)
+glimpse(loan.train)
+```
+```{r unique_col}
+cols <- list('Gender','Married', 'Dependents','Education','Self_Employed','Credit_History','Property_Area')
+for (col in cols){
+  uni <- list(unique(loan.train[[col]]))
+  print(paste0('The unique values in the column ',col, ' are: ', uni))
+}
+
+coappinc_table <- table(loan.train$CoapplicantIncome)
+print(paste0('The number of observations with zero value is: ',coappinc_table[names(coappinc_table) == 0]))
+```
+From the initial summary statistic we can see that there are some missing values in the dataset, the unique values contain empty characters and most of them are in the wrong format.
+The Coapplicant Income also contains many zero values, we replace all of these values with NA and then using a backward filling to impute some real data.
+We have to make sure that there are no blank values either,hence counting all the missing values by column including blank ones.
+
+```{r}
+sapply(loan.train, function(x) sum(is.na(x) | x == '' | x== ' '))
+sapply(loan.test, function(x) sum(is.na(x) | x == '' | x== ' '))
+```
+
+### Data cleaning and transformation
+
+We replace the missing values in the Gender category with the ***most frequent gender**. \n
+
+The Married variable has three missing values that we replace with **'No'**. \n
+
+Missing values from the Dependents are replaced with **'0'**, assuming it was left empty as there are no dependents. \n
+
+From the Self Employed category the values are replaced with **'No'**. \n
+
+We replace the missing values in the Loan Amount with the **average loan amount** based on the assumption that it is a mandatory value for a loan application hence can't be zero. \n
+
+The Loan Amount Term is replaced with the **most frequently** appearing term. \n
+
+The missing values from Credit History are replaced with **'0'**, meaning that there is no history available for that client. \n
+
+Removing the first column from both data set (Loan_ID) as we don't need it.
+
+```{r data_cleaning}
+getMode <- function(x){
+  uni <- unique(x)
+  uni[which.max(tabulate(match(x, uni)))]
+}
+
+loan.train$Gender[loan.train$Gender == '' | loan.train$Gender == ' '] <- getMode(loan.train$Gender)
+loan.train$Married[loan.train$Married == '' | loan.train$Married == ' '] <- 'No'
+loan.train$Dependents[loan.train$Dependents == '' | loan.train$Dependents == ' '] <- 0
+loan.train$Self_Employed[loan.train$Self_Employed == '' | loan.train$Self_Employed == ' '] <- 'No'
+loan.train$LoanAmount[is.na(loan.train$LoanAmount)] <- mean(loan.train$LoanAmount, na.rm = TRUE)
+loan.train$Loan_Amount_Term[is.na(loan.train$Loan_Amount_Term)] <- getMode(loan.train$Loan_Amount_Term)
+loan.train$Credit_History[is.na(loan.train$Credit_History)] <- 0
+
+loan.test$Gender[loan.test$Gender == '' | loan.test$Gender == ' '] <- getMode(loan.test$Gender)
+loan.test$Dependents[loan.test$Dependents == '' | loan.test$Dependents == ' '] <- 0
+loan.test$Self_Employed[loan.test$Self_Employed == '' | loan.test$Self_Employed == ' '] <- 'No'
+loan.test$LoanAmount[is.na(loan.test$LoanAmount)] <- mean(loan.test$LoanAmount, na.rm = TRUE)
+loan.test$Loan_Amount_Term[is.na(loan.test$Loan_Amount_Term)] <- getMode(loan.test$Loan_Amount_Term)
+loan.test$Credit_History[is.na(loan.test$Credit_History)] <- 0
+
+loan.train <- subset(loan.train, select = -c(Loan_ID))
+loan.test <- subset(loan.test, select = -c(Loan_ID))
+
+sapply(loan.train, function(x) sum(is.na(x) | x == '' | x== ' '))
+sapply(loan.test, function(x) sum(is.na(x) | x == '' | x== ' '))
+```
+```{r replace_zerosTo_NA}
+loan.train$CoapplicantIncome <- replace(loan.train$CoapplicantIncome, loan.train$CoapplicantIncome == 0, NA)
+loan.test$CoapplicantIncome <- replace(loan.test$CoapplicantIncome, loan.test$CoapplicantIncome == 0, NA)
+loan.train <- loan.train %>% fill(CoapplicantIncome, .direction = 'up')
+loan.train <- loan.train %>% fill(CoapplicantIncome, .direction = 'down')
+loan.test <- loan.test %>% fill(CoapplicantIncome, .direction = 'up')
+loan.test <- loan.test %>% fill(CoapplicantIncome, .direction = 'down')
+```
+
+There are no missing values anymore and the data is now ready for further analysis. \n
+
+Replacing the values '3+', with '3' keeping the assumption that it means 3 or more dependents.
+
+```{r fix_dependent}
+loan.train$Dependents[loan.train$Dependents > 2] <- 3
+loan.test$Dependents[loan.test$Dependents > 2] <- 3
+```
+
+
+We require that some of the variables to be in a categorical format.
+
+```{r factorial_convert}
+
+loan.train <- loan.train %>% mutate_at(
+  c('Gender', 'Married', 'Dependents', 'Education', 'Self_Employed', 'Credit_History', 'Property_Area', 'Loan_Status'), as.factor)
+
+loan.test <- loan.test %>% mutate_at(
+  c('Gender', 'Married', 'Dependents', 'Education', 'Self_Employed', 'Credit_History', 'Property_Area'), as.factor)
+```
+
+```{r check_for_null}
+for(col in colnames(loan.train)){
+  print(paste0('The number of missing values in ', col, 'are: ', sum(is.na(loan.train[[col]]))))
+}
+```
+
+
+### Outlier's Detection
+
+Have a look our numeric variables and their distribution.
+
+```{r histogram, fig.height=12, fig.width=12}
+numeric_list <- c('ApplicantIncome','CoapplicantIncome','LoanAmount')
+
+histFunc <- function(data, var){
+    ggplot(data, aes(data[,var]))+
+          geom_histogram(bins = 45, color="black", fill="white", show.legend = FALSE)+
+          ggtitle(paste0('Histogram of ', var))+
+          labs(x = var, y = 'Number of observations') +
+          geom_vline(aes(xintercept=mean(data[,var])),
+            color="blue", linetype="dashed", size=1)
+}
+
+densityFunc <- function(data, var){
+    ggplot(data, aes(data[,var]))+
+          geom_histogram(aes(y = ..density..), bins = 45, color="black", fill="white", show.legend = FALSE)+
+          geom_density(alpha=.2, fill="#FF6666")+
+          ggtitle(paste0('Histogram of ', var))+
+          labs(x = var, y = 'Density')
+}
+
+p <- list()
+pp <- list()
+for(var in numeric_list){
+  p[[var]] <- histFunc(loan.train, var)
+  pp[[var]] <- densityFunc(loan.train, var)
+}
+do.call(grid.arrange,p)
+do.call(grid.arrange, pp)
+
+
+```
+There are many outliers in our the variables. Calculate the quantiles of these three variables and the upper limit only
+
+```{r}
+upperlimitList <- list()
+limitCalc <- function(var){
+  q <- quantile(loan.train[,var], probs = seq(0, 1, 1/4))
+  iqr = q[4] - q[2]
+  upper_limit <- round(q[4] + (iqr * 1.5), digits = 0)
+}
+
+upperLL <- c('ApplicantIncome','CoapplicantIncome','LoanAmount')
+for (var in upperLL){
+  upperlimitList[[var]] <- limitCalc(var)
+}
+```
+
+Remove the outliers and plot again to see the distribution of the data and their qqplot.
+
+```{r normality_train, fig.height=12, fig.width=12}
+outl <- subset(loan.train, 
+               Loan_Amount_Term >= 400 |
+               Loan_Amount_Term <= 179 |
+               LoanAmount >= upperlimitList$LoanAmount |
+               ApplicantIncome >= upperlimitList$ApplicantIncome |
+               CoapplicantIncome >= upperlimitList$CoapplicantIncome)
+new.loan.train <- anti_join(loan.train, outl, by=NULL, copy=FALSE)
+
+qqlist <- c('ApplicantIncome','CoapplicantIncome','LoanAmount','Loan_Amount_Term')
+
+normalityFunc <- function(data, var){
+    shpwlk <- shapiro.test(data[,var])
+    ggplot(data, aes(data[,var]))+
+          geom_histogram(bins = 45, color="black", fill="white", show.legend = FALSE)+
+          ggtitle('The p-value of the distribution is: ', shpwlk$p.value)+
+          labs(x = var, y = 'Number of observations')+
+          geom_vline(aes(xintercept=mean(data[,var])),
+            color="blue", linetype="dashed", size=1)
+}
+
+qqNormPlot <- function(data, var){
+  qqnorm(data[,var], col = 'red')
+  qqline(data[,var], distribution = qnorm, col = 'blue')
+}
+
+qqNormPlot2 <- function(data, var){
+  qqnorm(data[,var], col = 'red')
+  qqline(data[,var], distribution = qnorm, col = 'blue')
+}
+
+p <- list()
+for(var in qqlist){
+  p[[var]] <- normalityFunc(new.loan.train, var)
+}
+do.call(grid.arrange,p)
+
+p <- list()
+par(mfcol=c(2,2))
+for(var in qqlist){
+  p[[var]] <- qqNormPlot(loan.train, var)
+}
+
+p <- list()
+par(mfcol=c(2,2))
+for(var in qqlist){
+  p[[var]] <- qqNormPlot2(new.loan.train, var)
+}
+```
+
+The data now seems more normally distributed and from the qqplots can be seen that there is a significant difference between the before and the after state.
+Make a final test using Rosnet test to check for outliers.
+
+```{r outlier_detection}
+par(mfcol=c(2,2))
+ggplot(new.loan.train, aes(x = '', y = ApplicantIncome))+
+                    geom_boxplot(outlier.colour = "red", outlier.shape = 1)
+rosTest <- rosnerTest(new.loan.train$ApplicantIncome, k = 5) 
+rosTest$all.stats
+
+ggplot(new.loan.train, aes(x = '', y = CoapplicantIncome))+
+                    geom_boxplot(outlier.colour = "red", outlier.shape = 1)
+rosTest2 <- rosnerTest(new.loan.train$CoapplicantIncome, k = 5) 
+rosTest2$all.stats
+
+ggplot(new.loan.train, aes(x = '', y = LoanAmount))+
+                    geom_boxplot(outlier.colour = "red", outlier.shape = 1)
+rosTest3 <- rosnerTest(new.loan.train$LoanAmount, k = 5) 
+rosTest3$all.stats
+```
+
+We can see that there are no more outliers left. Removing the outliers will help to increase model performance.
+Values in the Loan Amount Term are not tested as everything that's not 360 value is considered as an outlier. Removing these would significantly reduce the number of observations in the dataframe.
+
+## EDA
+### Univariate analysis
+
+```{r loan_amount_table}
+table(loan.train$Loan_Amount_Term, loan.train$Loan_Amount_Term)
+```
+
+```{r univariate_1, fig.width = 12, fig.height = 12}
+univarGenderPlot <- function(data, var){
+         data %>% group_by(data[,var]) %>%
+                        ggplot(aes(x = data[,var])) +
+                        geom_bar(fill = 4) +
+                        labs(x = var, y = 'Number of applicants') +
+                        ggtitle(paste0('Number of applicants by ', var)) +
+                        theme(plot.title = element_text(hjust = 0.5))
+}
+
+plt.list1 <- c('Gender', 'Dependents', 'Married', 'Education', 'Self_Employed', 'Loan_Amount_Term', 'Credit_History', 'Property_Area')
+
+p <- list()
+for(var in plt.list1){
+  p[[var]] <- univarGenderPlot(loan.train,var)
+}
+do.call(grid.arrange,p)
+
+p <- list()
+for(var in plt.list1){
+  p[[var]] <- univarGenderPlot(new.loan.train,var)
+}
+do.call(grid.arrange,p)
+```
+
+```{r univariate_2, fig.width = 12, fig.height = 12}
+univarLoanAmountPlot <- function(data, var){
+         data %>% ggplot(aes(x = LoanAmount)) +
+                        geom_histogram(bins = 45, fill = 2,position = "identity") +
+                        facet_wrap(~ data[,var]) +
+                        labs(x = paste0('Loan amount by ', var), y = 'Number of applicants') +
+                        ggtitle(paste0('Distribution of loan amount by ', var)) +
+                        theme(plot.title = element_text(hjust = 0.5))
+}
+
+plt.list2 <- c('Gender', 'Dependents', 'Married', 'Education', 'Self_Employed')
+
+p <- list()
+for(var in plt.list2){
+  p[[var]] <- univarLoanAmountPlot(loan.train, var)
+}
+do.call(grid.arrange,p)
+
+p <- list()
+for(var in plt.list2){
+  p[[var]] <- univarLoanAmountPlot(new.loan.train, var)
+}
+do.call(grid.arrange,p)
+```
+
+```{r univariate_3, fig.width = 12, fig.height = 12}
+univarApplicantIncomePlot <- function(data, var){
+         data %>% ggplot(aes(x = ApplicantIncome)) +
+                        geom_histogram(bins = 45, fill = 4, position = "identity") +
+                        facet_wrap(~ data[,var]) +
+                        labs(x = paste0('Applicant Income by ', var), y = 'Number of applicants') +
+                        ggtitle(paste0('Distribution of applicants income by ', var)) +
+                        theme(plot.title = element_text(hjust = 0.5))
+}
+
+p <- list()
+for(var in plt.list2){
+  p[[var]] <- univarApplicantIncomePlot(loan.train, var)
+}
+do.call(grid.arrange,p)
+
+p <- list()
+for(var in plt.list2){
+  p[[var]] <- univarApplicantIncomePlot(new.loan.train, var)
+}
+do.call(grid.arrange,p)
+```
+### Multivariate analysis
+
+```{r freq}
+table(new.loan.train$Loan_Status, new.loan.train$Loan_Amount_Term)
+area_loanstatus2 <- table(new.loan.train$Property_Area, new.loan.train$Loan_Status)
+chordDiagram(as.matrix(area_loanstatus2), small.gap = 3, big.gap = 10)
+circos.clear()
+```
+The number of applications by term and acceptance. \n
+
+The circular plot shows the the loan status - accepted or rejected - with the breakdown of the preferred property location.
+
+```{r multivariate1}
+loanAmLoanT <- function(data){
+       data %>% ggplot(aes(x = Loan_Amount_Term , y = LoanAmount, group = Loan_Status)) +
+                geom_point(cex = 1.5, pch = 1, position = position_jitter(w = 10, h = 0), aes(color = Loan_Status)) +
+                scale_color_manual(values = c('red', 'blue')) +
+                labs(x = 'Loan AMount Term', y = 'Loan amount') +
+                ggtitle('Loan amount and loan term comparison') +
+                theme(plot.title = element_text(hjust = 0.5))
+}
+
+appliCoapp <- function(data){
+                #filter(ApplicantIncome < 20000 & CoapplicantIncome < 20000) %>% 
+       data %>% ggplot(aes(x = ApplicantIncome , y = CoapplicantIncome, group = Loan_Status)) +
+                geom_point(cex = 1.5, pch = 1, position = position_jitter(w = 5, h = 0), aes(color = Loan_Status)) +
+                scale_color_manual(values = c('red', 'blue')) +
+                labs(x = 'Main applicant income', y = 'Co-applicant income') +
+                ggtitle('Trimmed main and co applicant income distribution') +
+                theme(plot.title = element_text(hjust = 0.5))
+}
+
+loanAmLoanT(loan.train)
+appliCoapp(loan.train)
+loanAmLoanT(new.loan.train)
+appliCoapp(new.loan.train)
+
+```
+The scatterplot shows applicants income relationship and the term by amount before and after the cleaning from outliers.
+
+```{r scatterPlot, fig.width = 12, fig.height = 12}
+ggpairs(new.loan.train, columns = c('ApplicantIncome','CoapplicantIncome','LoanAmount','Loan_Amount_Term','Credit_History','Property_Area','Loan_Status'))
+```
+
+## Model building
+
+### Binary Logistic regression
+
+We fit a binomial logistic model on our training data set. 
+
+```{r}
+glm_model <- glm(formula = Loan_Status ~., family = binomial, data = new.loan.train)
+summary(glm_model)
+```
+
+Applying a step-wise algorithm to find the best model.
+
+```{r step}
+step(glm_model, direction = 'both', trace = 1, steps = 1000)
+```
+
+There is not much of an improvement on the AIC from the step-wise algorithm, hence we use the variables with the least AIC and a few more that's seems important.
+
+We build the model only with these variables and compare them with the intercept only model.
+
+```{r new_model}
+glm2_model <- glm(formula = Loan_Status ~  ApplicantIncome + CoapplicantIncome + LoanAmount + Credit_History + Property_Area, family = binomial, data = new.loan.train)
+
+glm_intercept <- glm(Loan_Status~1, data = new.loan.train, family = binomial)
+anova(glm_intercept, glm2_model, test="Chisq")
+
+LSP <- data.frame(new.loan.train$Loan_Status)
+LSP$new.loan.train.Loan_Status <- as.factor(LSP$new.loan.train.Loan_Status)
+
+LSP$glm_model_predprob <- round(fitted(glm2_model),2)
+LSP$glm_pred <- ifelse(LSP$glm_model_predprob > 0.6, 'Y', 'N')
+LSP$glm_pred <- as.factor(LSP$glm_pred)
+library(caret)
+confusionMatrix(LSP$new.loan.train.Loan_Status, LSP$glm_pred, positive = 'Y')
+
+```
+
+```{r ROC_glm}
+library('pROC')
+
+rocobj <- roc(LSP$new.loan.train.Loan_Status, LSP$glm_model_predprob, auc = TRUE, plot = TRUE, ci = TRUE, print.auc=TRUE, grid = TRUE)
+ciobj <- ci.se(rocobj, specificities=seq(0, 1, 0.1))
+plot(ciobj, type="shape", col="#1c61b6AA")
+plot(ci.sp(rocobj, boot.stratified=TRUE), type="bars")
+print(rocobj)
+print(paste0('The AUC score for the SVM classifier is: ', rocobj$auc))
+```
+
+The ROC curve is seen above for the model. The area under the curve with confidence interval shows that the model is an acceptable.  
+
+### Naive Bayes Classifier
+
+```{r naiveBayes}
+library(e1071)
+
+nB_model <- naiveBayes(Loan_Status~., data = new.loan.train)
+LSP$pred_nB <- predict(nB_model, new.loan.train, type = 'raw')
+
+LSP$predY_nB <- ifelse(LSP$pred_nB[,2] > 0.6, 'Y', 'N')
+LSP$predY_nB <- as.factor(LSP$predY_nB)
+
+confusionMatrix(LSP$predY_nB, LSP$new.loan.train.Loan_Status, positive = 'Y')
+```
+
+
+```{r ROC_nB}
+rocobj_nB <- roc(LSP$new.loan.train.Loan_Status, LSP$pred_nB[,2], auc = TRUE, plot = TRUE, ci = TRUE, print.auc=TRUE, grid = TRUE)
+ciobj_nB <- ci.se(rocobj_nB, specificities=seq(0, 1, 0.1))
+plot(ciobj_nB, type="shape", col="#1c61b6AA")
+plot(ci.sp(rocobj_nB, boot.stratified=TRUE), type="bars")
+print(rocobj_nB)
+print(paste0('The AUC score for the Naive Bayes classifier is: ', rocobj_nB$auc))
+```
+
+### Support Vector Machines Classifier
+
+```{r SVM}
+new.loan.train$Dependents <- as.integer(new.loan.train$Dependents)
+new.loan.train$CoapplicantIncome <- as.integer(new.loan.train$CoapplicantIncome)
+new.loan.train$LoanAmount <- as.integer(new.loan.train$LoanAmount)
+svm_model <- svm(formula = Loan_Status~., data = new.loan.train, type = 'C-classification', probability = TRUE, kernel = 'linear')
+LSP$svm_pred <- predict(svm_model, new.loan.train, probability = TRUE)
+
+confusionMatrix(LSP$svm_pred, LSP$new.loan.train.Loan_Status, positive = 'Y')
+```
+
+```{r ROC_svm}
+LSP$svm_pred_bool <- ifelse(LSP$svm_pred == 'Y', 1, 0)
+
+rocobj_svm <- roc(LSP$new.loan.train.Loan_Status, LSP$svm_pred_bool, auc = TRUE, plot = TRUE, ci = TRUE, print.auc=TRUE, grid = TRUE)
+ciobj_svm <- ci.se(rocobj_svm, specificities=seq(0, 1, 0.1))
+plot(ciobj_svm, type="shape", col="#1c61b6AA")
+plot(ci.sp(rocobj_svm, boot.stratified=TRUE), type="bars")
+print(rocobj_svm)
+print(paste0('The AUC score for the SVM classifier is: ', rocobj_svm$auc))
+```
+
+### Artificial Neural Network
+
+```{r data_conversion}
+library(neuralnet)
+library(fastDummies)
+
+loan.train_ann <- dummy_cols(new.loan.train, 
+                             select_columns = c('Gender','Married','Education','Self_Employed','Credit_History','Property_Area','Loan_Status'), 
+                             remove_first_dummy = TRUE, 
+                             remove_selected_columns = TRUE)
+normalize <- function(x){
+  return((x-min(x))/(max(x)-min(x)))
+}
+loan.train_ann$Dependents <- normalize(loan.train_ann$Dependents)
+loan.train_ann$ApplicantIncome <- normalize(loan.train_ann$ApplicantIncome)
+loan.train_ann$CoapplicantIncome <- normalize(loan.train_ann$CoapplicantIncome)
+loan.train_ann$LoanAmount <- normalize(loan.train_ann$LoanAmount)
+loan.train_ann$Loan_Amount_Term <- normalize(loan.train_ann$Loan_Amount_Term)
+names(loan.train_ann)[names(loan.train_ann)=='Education_Not Graduate'] <- 'Education_Not_Graduate'
+```
+
+```{r ANN}
+ann_model <- neuralnet(Loan_Status_Y~., data = loan.train_ann, hidden = 5, rep = 3, err.fct = 'ce', linear.output = FALSE)
+LSP$ann_pred <- ann_model$net.result[[1]]
+LSP$ann_pred_bool <- ifelse(LSP$ann_pred > 0.6, 1, 0)
+LSP$ann_pred_YN <- ifelse(LSP$ann_pred_bool == 1, 'Y', 'N')
+LSP$ann_pred_YN <- as.factor(LSP$ann_pred_YN)
+```
+
+```{r ann_plot, fig.width = 12, fig.height = 12}
+plot(ann_model)
+confusionMatrix(LSP$ann_pred_YN, LSP$new.loan.train.Loan_Status, positive = 'Y')
+```
+
+```{r ROC_ann}
+rocobj_ann <- roc(LSP$new.loan.train.Loan_Status, LSP$ann_pred_bool, auc = TRUE, plot = TRUE, ci = TRUE, print.auc=TRUE, grid = TRUE)
+ciobj_ann <- ci.se(rocobj_ann, specificities=seq(0, 1, 0.1))
+plot(ciobj_ann, type="shape", col="#1c61b6AA")
+plot(ci.sp(rocobj_ann, boot.stratified=TRUE), type="bars")
+print(rocobj_ann)
+print(paste0('The AUC score for the ANN classifier is: ', rocobj_ann$auc))
+```
+
+From the above tested classifiers the ANN classifier perform best.
+
+## Licence
+
+CC0: Public Domain - https://creativecommons.org/publicdomain/zero/1.0/
