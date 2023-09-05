@@ -25,7 +25,7 @@ Python projects can be accessed here on Github.
             The project started with a short EDA followed by data cleaning. The detailed visualizations provide insights into the emissions from different sectors and countries.
             The analysis finised with hypothesis testing and predictions.
 
-    - [Yulu Business Hypothesis testing](https://github.com/ptrGSKA/Business_case-Yulu-Hypothesis_testing):
+    - [Yulu Business Hypothesis testing](https://github.com/ptrGSKA/Business_case-Yulu-Hypothesis_testing):  Analysis of a bike sharing company's data in India.
 
 - __Machine Learning__
 
@@ -36,7 +36,7 @@ Python projects can be accessed here on Github.
 
 -  __Exploratory data analysis and data visualization__
 
-      - [Memory Test Drug Trial Analysis](https://rpubs.com/ptrGSKA/memory_drug_test): Analysis of a bike sharing company's data in India.
+      - [Memory Test Drug Trial Analysis](https://rpubs.com/ptrGSKA/memory_drug_test): Clinical trial of a drug on novel Islanders whom mimic real-life humans in response to external factors. The analysis contains EDA, visualization and hypothesis testing.
 
       - [Financial Analysis of Global Markets](https://rpubs.com/ptrGSKA/1051903): Market analysis accross global markets in the USA, Europe, London, Hong-Kong and Japan. The time series analysis was carried out in R and an accompaning app was developed in R Shiny.
             This analysis was done as the final graduating project. It contains data collection from Yahoo Financial Services, followed by data cleaning and analysis. The project is separated into three main sections:
