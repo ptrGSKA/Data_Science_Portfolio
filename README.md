@@ -34,9 +34,11 @@ Python projects can be accessed here on Github.
 
 ### R
 
--  __Exploratory data analysis and data visualization__
+-  __Exploratory data analysis, data visualization and hypothesis testing__
 
       - [Memory Test Drug Trial Analysis](https://rpubs.com/ptrGSKA/memory_drug_test): Clinical trial of a drug on novel Islanders whom mimic real-life humans in response to external factors. The analysis contains EDA, visualization and hypothesis testing.
+
+- __Machine Learning__
 
       - [Financial Analysis of Global Markets](https://rpubs.com/ptrGSKA/1051903): Market analysis accross global markets in the USA, Europe, London, Hong-Kong and Japan. The time series analysis was carried out in R and an accompanying app was developed in R Shiny.
             This analysis was done as the final graduating project. It contains data collection from Yahoo Financial Services, followed by data cleaning and analysis. The project is separated into three main sections:
@@ -44,10 +46,9 @@ Python projects can be accessed here on Github.
               - The second part contains machine learning models to predict the market opening.
               - The last section is a pair trading in the technology sector - Identifying co-integrated pairs and time to entry/exit.
 
-- __Machine Learning__
-
-     - [Home Loan Approval Classification](https://rpubs.com/ptrGSKA/1078169): Classification models for acceptance for loan application outcome. The analysis started with data cleaning and imputation the detection and removal of outliers
-              preparing data for prediction. This is followed by some EDA, and model building where the best performing model has achieved over 85% accuracy. 
+      - [Home Loan Approval Classification](https://rpubs.com/ptrGSKA/1078169): Classification models for acceptance for loan application outcome. The analysis started with data cleaning and imputation the detection and removal of outliers
+              preparing data for prediction. This is followed by some EDA, and model building where the best performing model has achieved over 85% accuracy.
+       
 ### R - Shiny
 
 - __App Developement__
