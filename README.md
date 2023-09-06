@@ -48,8 +48,10 @@ Python projects can be accessed here on Github.
 
      - [Home Loan Approval Classification](https://rpubs.com/ptrGSKA/1078169): Classification models for acceptance for loan application outcome. The analysis started with data cleaning and imputation the detection and removal of outliers
               preparing data for prediction. This is followed by some EDA, and model building where the best performing model has achieved over 85% accuracy. 
-- __Shiny web application__
+### Shiny web application
 
+- __App Developement__
+  
     - [Financial analysis of Global Stock Markets](https://ptrgska.shinyapps.io/financial_analysis_shiny/): Analysis of global markets as the final grduation project. This is an interactive version of the above described project.
             Shiny web app was developed at the end of the analysis.
 
