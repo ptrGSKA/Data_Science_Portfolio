@@ -24,7 +24,8 @@ Python projects can be accessed here on Github or alternatively on nbviewer.org 
   - [Agro-food_CO2_emission](https://github.com/ptrGSKA/Agro-food_CO2_emission): CO2 emission analysis of the agricultural sector. The dataset consists of 30 years of observations worldwide.
             The project started with a short EDA followed by data cleaning. The detailed visualizations provide insights into the emissions from different sectors and countries.
             The analysis finised with hypothesis testing and predictions.
-            [External link :](https://nbviewer.org/github/ptrGSKA/Agro-food_CO2_emission/blob/main/agri-food_co2_emission.ipynb)
+    
+    [External link :](https://nbviewer.org/github/ptrGSKA/Agro-food_CO2_emission/blob/main/agri-food_co2_emission.ipynb)
 
   - [Yulu Business Hypothesis testing](https://github.com/ptrGSKA/Business_case-Yulu-Hypothesis_testing):  Analysis of a bike sharing company's data in India.
 
@@ -32,7 +33,8 @@ Python projects can be accessed here on Github or alternatively on nbviewer.org 
 
   - [ Credit_Score_Classification](https://github.com/ptrGSKA/Credit_Score_Classification): The project begins with an EDA phase, followed by data cleaning including removing unnecessary data, adressing inconsistencies and imputing data.
             Data transformation techniques were selected and performed based on the data for preparation for modelling. This followed the machine learning modelling of the data, where the best scoring model achieved over 85% accuracy.
-            [External link :](https://nbviewer.org/github/ptrGSKA/Credit_Score_Classification/blob/main/credit_score_classification.ipynb)
+    
+    [External link :](https://nbviewer.org/github/ptrGSKA/Credit_Score_Classification/blob/main/credit_score_classification.ipynb)
 
 ### R
 
