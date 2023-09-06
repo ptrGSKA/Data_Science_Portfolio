@@ -36,7 +36,7 @@ Python projects can be accessed here on Github.
 
 -  __Exploratory data analysis, data visualization and hypothesis testing__
 
-  - [Memory Test Drug Trial Analysis](https://rpubs.com/ptrGSKA/memory_drug_test): Clinical trial of a drug on novel Islanders whom mimic real-life humans in response to external factors. The analysis contains EDA, visualization and hypothesis testing.
+    - [Memory Test Drug Trial Analysis](https://rpubs.com/ptrGSKA/memory_drug_test): Clinical trial of a drug on novel Islanders whom mimic real-life humans in response to external factors. The analysis contains EDA, visualization and hypothesis testing.
 
 - __Machine Learning__
   
