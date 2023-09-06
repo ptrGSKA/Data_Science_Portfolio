@@ -48,7 +48,7 @@ Python projects can be accessed here on Github.
 
      - [Home Loan Approval Classification](https://rpubs.com/ptrGSKA/1078169): Classification models for acceptance for loan application outcome. The analysis started with data cleaning and imputation the detection and removal of outliers
               preparing data for prediction. This is followed by some EDA, and model building where the best performing model has achieved over 85% accuracy. 
-### Shiny web application
+### R - Shiny
 
 - __App Developement__
   
