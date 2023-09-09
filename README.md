@@ -29,6 +29,7 @@ Python projects can be accessed here on Github or alternatively on nbviewer.org 
 
   - [Yulu Business Hypothesis testing](https://github.com/ptrGSKA/Business_case-Yulu-Hypothesis_testing):  Analysis of a bike sharing company's data in India. Project started with EDA that followed by feature enginering to better fit for our purpose.
             Data has been downsized and cleaned. This followed by visualization and finised with building ARIMA models to try forecasting the demand. Also revaled in the last section what features are effecting demand most.
+    [External link to Yulu Business Analysis](https://nbviewer.org/github/ptrGSKA/Business_case-Yulu-Hypothesis_testing/blob/main/Yulu_Business_Hypothesis_Testing.ipynb)
 
 - __Machine Learning__
 
